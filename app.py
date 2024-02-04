@@ -10,9 +10,14 @@ class StreamlitModel:
     filename = None
     columns : np.ndarray
     pipeline : Pipeline = None
+    props = {
+        "title": "Predecir lluvia",
+        "result_cb": lambda value: value
+    }
     
-    def __init__(self, filename : str):
+    def __init__(self, filename : str, **kwargs):
         self.filename = path.join("models", filename)
+        self.props = {**self.props, **kwargs}
         self.__load_model()
     
     def run(self):
@@ -30,7 +35,7 @@ class StreamlitModel:
         """
         Inicia streamlit
         """
-        st.title("Predecir lluvia")
+        st.title(self.props["title"])
         input = {}
         submit_btn = True #Aunque esta variable no se use es necesario tenerla para que el submit button se muestre en el html.
         with st.form(key="form_" + self.__rand_id()):
@@ -53,10 +58,10 @@ class StreamlitModel:
         pred = self.pipeline.predict(input)
         value = pred[0]
         st.write("Resultado:")
-        st.write(value)
+        st.write(self.props["result_cb"](value))
     
     def __rand_id(self):
         return "".join(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ") for i in range(6))
 
-classification = StreamlitModel("rain.pkl")
+classification = StreamlitModel("rain.pkl", title="Regresión Logística")
 classification.run()
