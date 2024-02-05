@@ -1,54 +1,67 @@
 import streamlit as st
 import joblib
+from sklearn.pipeline import Pipeline
 import pandas as pd
-import os
-import keras 
+import numpy as np
+from os import path
+import random
 
-input_features = ['MinTemp', 'MaxTemp', 'Rainfall', 'Evaporation', 'Sunshine',
-       'WindGustSpeed', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
-       'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm',
-       'Temp9am', 'Temp3pm', 'RainToday', 'RainfallTomorrow', 'Canberra',
-       'Melbourne', 'MelbourneAirport', 'Sydney', 'SydneyAirport',
-       'WindGustDir__E', 'WindGustDir__N', 'WindGustDir__S', 'WindGustDir__W',
-       'WindDir9am__E', 'WindDir9am__N', 'WindDir9am__S', 'WindDir9am__W',
-       'WindDir3pm__E', 'WindDir3pm__N', 'WindDir3pm__S', 'WindDir3pm__W',
-       'Season__1', 'Season__2', 'Season__3', 'Season__4']
-
-path_dir=os.path.dirname(os.path.abspath(__file__))
-pkl_path=os.path.join(path_dir, 'models/rain.pkl')
-pipe = joblib.load(pkl_path)
-
-st.title('Modelo predictor de lluvia')
-
-def get_user_input():
-
-    input_dict = {}
-
-    with st.form(key='default_form'):
-        for feat in input_features:
-            input_value = st.number_input(f"Ingrese el valor para {feat}:", value=0.0, step=0.1)
-            input_dict[feat] = input_value
-
-       
-        submit_button = st.form_submit_button(label='Aceptar')
-
-    return pd.DataFrame([input_dict]), submit_button
-
-user_input, submit_button = get_user_input()
-
-
-# Realizar la predicción
-if submit_button:
-    prediction = pipe.predict(user_input)
-    prediction_value = prediction[0]
-
-    st.header("Resultado")
-    st.write("Llueve" if prediction_value == 1 else "No llueve")
+class StreamlitModel:
+    filename = None
+    columns : np.ndarray
+    pipeline : Pipeline = None
+    props = {
+        "title": "Predecir lluvia",
+        "result_cb": lambda value: value
+    }
     
+    def __init__(self, filename : str, **kwargs):
+        self.filename = path.join("models", filename)
+        self.props = {**self.props, **kwargs}
+        self.__load_model()
+    
+    def run(self):
+        self.__setup_streamlit()
+    
+    def __load_model(self):
+        """
+        Carga el modelo
+        """
+        pipeline_data = joblib.load(self.filename)
+        self.columns = pipeline_data["columns"]
+        self.pipeline = pipeline_data["pipeline"]
+    
+    def __setup_streamlit(self):
+        """
+        Inicia streamlit
+        """
+        st.title(self.props["title"])
+        input = {}
+        submit_btn = True #Aunque esta variable no se use es necesario tenerla para que el submit button se muestre en el html.
+        with st.form(key="form_" + self.__rand_id()):
+            for column in self.columns:
+                value = st.number_input(f"Valor para {column}:", value=0.0, step=1.0)
+                input[column] = value
+            input_df = pd.DataFrame([input])
+            submit_btn = st.form_submit_button(label="Predecir", on_click=lambda: self.__predict(input_df))
+        st.markdown(
+            """
+            Trabajo Practio Aprendizaje Automatico:<br>
+            [ Github ](https://github.com/Simon890/aprendizaje_auto)
+            """, unsafe_allow_html=True
+        )
+            
+    def __predict(self, input):
+        """
+        Realiza la predicción
+        """
+        pred = self.pipeline.predict(input)
+        value = pred[0]
+        st.write("Resultado:")
+        st.write(self.props["result_cb"](value))
+    
+    def __rand_id(self):
+        return "".join(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ") for i in range(6))
 
-st.markdown(
-    """
-    Trabajo Practio Aprendizaje Automatico:<br>
-    [ Github ](https://github.com/Simon890/aprendizaje_auto)
-    """, unsafe_allow_html=True
-)
+classification = StreamlitModel("rain.pkl", title="Regresión Logística")
+classification.run()
