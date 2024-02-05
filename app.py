@@ -39,12 +39,13 @@ class StreamlitModel:
         st.title(self.props["title"])
         input = {}
         submit_btn = True #Aunque esta variable no se use es necesario tenerla para que el submit button se muestre en el html.
-        with st.form(key="form_" + self.__rand_id()):
+        with st.form(key="form_data"):
             for column in self.columns:
                 value = st.number_input(f"Valor para {column}:", value=0.0, step=1.0)
                 input[column] = value
+            print(input)
             input_df = pd.DataFrame([input])
-            
+            print(input_df)
             submit_btn = st.form_submit_button(label="Predecir", on_click=lambda: self.__predict(input_df))
         st.markdown(
             """
@@ -61,18 +62,18 @@ class StreamlitModel:
         value = pred[0]
         st.write("Resultado:")
         st.write(self.props["result_cb"](value))
-    
-    def __rand_id(self):
-        return "".join(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ") for i in range(6))
 
 model = None
-model_type = "reg"
+model_type = "clas"
 
 if len(sys.argv) == 2:
     model_type = sys.argv[1]
+
 if model_type == "reg":
+    print("Starting LINEAL regression model")
     model = StreamlitModel("reg.pkl", title="Regresión Lineal")
 else:
+    print("Starting LOGISTIC regression model")
     model = StreamlitModel("clas.pkl", title="Regresión Logística")
 
 model.run()
