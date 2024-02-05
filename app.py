@@ -73,7 +73,6 @@ if len(sys.argv) == 2:
     model_type = sys.argv[1]
 
 if model_type == "reg":
-    print("Starting LINEAL regression model")
     model = StreamlitModel("reg.pkl", title="Regresión Lineal")
 else:
     def render_pred(value):
