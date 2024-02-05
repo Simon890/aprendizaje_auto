@@ -37,21 +37,25 @@ class StreamlitModel:
         Inicia streamlit
         """
         st.title(self.props["title"])
-        input = {}
         submit_btn = True #Aunque esta variable no se use es necesario tenerla para que el submit button se muestre en el html.
-        with st.form(key="form_" + self.__rand_id()):
+        with st.form(key="form_"):
             for column in self.columns:
-                value = st.number_input(f"Valor para {column}:", value=0.0, step=1.0)
-                input[column] = value
-            input_df = pd.DataFrame([input])
+                st.number_input(f"Valor para {column}:", value=0.0, step=1.0, key=column)
             
-            submit_btn = st.form_submit_button(label="Predecir", on_click=lambda: self.__predict(input_df))
+            submit_btn = st.form_submit_button(label="Predecir", on_click=self.__submit_btn_cb)
         st.markdown(
             """
             Trabajo Practio Aprendizaje Automatico:<br>
             [ Github ](https://github.com/Simon890/aprendizaje_auto)
             """, unsafe_allow_html=True
         )
+    
+    def __submit_btn_cb(self):
+        input_form = {}
+        for column in self.columns:
+            input_form[column] = st.session_state[column]
+        input_df = pd.DataFrame([input_form])
+        self.__predict(input_df)
             
     def __predict(self, input):
         """
@@ -61,9 +65,6 @@ class StreamlitModel:
         value = pred[0]
         st.write("Resultado:")
         st.write(self.props["result_cb"](value))
-    
-    def __rand_id(self):
-        return "".join(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ") for i in range(6))
 
 model = None
 model_type = "reg"
@@ -73,6 +74,8 @@ if len(sys.argv) == 2:
 if model_type == "reg":
     model = StreamlitModel("reg.pkl", title="Regresión Lineal")
 else:
-    model = StreamlitModel("clas.pkl", title="Regresión Logística")
+    def render_pred(value):
+        return "Va a llover" if value >= 0.5 else "No va a llover"
+    model = StreamlitModel("clas.pkl", title="Regresión Logística", result_cb=render_pred)
 
 model.run()
