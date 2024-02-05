@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from os import path
 import random
+import sys
 
 class StreamlitModel:
     filename = None
@@ -44,7 +45,7 @@ class StreamlitModel:
                 input[column] = value
             input_df = pd.DataFrame([input])
             
-            submit_btn = st.form_submit_button(label="Predecir", on_click=lambda: print(input_df))#self.__predict(input_df))
+            submit_btn = st.form_submit_button(label="Predecir", on_click=lambda: self.__predict(input_df))
         st.markdown(
             """
             Trabajo Practio Aprendizaje Automatico:<br>
@@ -64,5 +65,14 @@ class StreamlitModel:
     def __rand_id(self):
         return "".join(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ") for i in range(6))
 
-classification = StreamlitModel("rain.pkl", title="Regresión Logística")
-classification.run()
+model = None
+model_type = "reg"
+
+if len(sys.argv) == 2:
+    model_type = sys.argv[1]
+if model_type == "reg":
+    model = StreamlitModel("reg.pkl", title="Regresión Lineal")
+else:
+    model = StreamlitModel("clas.pkl", title="Regresión Logística")
+
+model.run()

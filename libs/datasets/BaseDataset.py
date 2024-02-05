@@ -30,6 +30,7 @@ class BaseDataset:
         self.x_train = None
         self.x_test = None
         self.y_train = None
+        self.scaler : StandardScaler = StandardScaler()
         self.y_test = None
 
     def load_csv(self, path:str)->DataFrame:
@@ -100,16 +101,16 @@ class BaseDataset:
     
     def scale_ds(self, target : Literal["dataframe", "splitted"] = "splitted", scale_target: bool = False):
 
-        std_scaler = StandardScaler()
+        self.scaler = StandardScaler()
 
         if target == "dataframe":
-            self.scaled_df = std_scaler.fit_transform( self.df )
+            self.scaled_df = self.scaler.fit_transform( self.df )
             return self.scaled_df
         
         elif target == "splitted":
-            std_scaler.fit( self.x_train )
-            self.x_train = std_scaler.transform( self.x_train )
-            self.x_test = std_scaler.transform( self.x_test )
+            self.scaler.fit( self.x_train )
+            self.x_train = self.scaler.transform( self.x_train )
+            self.x_test = self.scaler.transform( self.x_test )
 
         if scale_target:
             std_scaler_y = StandardScaler()
