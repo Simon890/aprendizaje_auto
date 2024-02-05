@@ -43,7 +43,8 @@ class StreamlitModel:
                 value = st.number_input(f"Valor para {column}:", value=0.0, step=1.0)
                 input[column] = value
             input_df = pd.DataFrame([input])
-            submit_btn = st.form_submit_button(label="Predecir", on_click=lambda: self.__predict(input_df))
+            
+            submit_btn = st.form_submit_button(label="Predecir", on_click=lambda: print(input_df))#self.__predict(input_df))
         st.markdown(
             """
             Trabajo Practio Aprendizaje Automatico:<br>
