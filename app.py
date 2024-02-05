@@ -37,22 +37,25 @@ class StreamlitModel:
         Inicia streamlit
         """
         st.title(self.props["title"])
-        input = {}
         submit_btn = True #Aunque esta variable no se use es necesario tenerla para que el submit button se muestre en el html.
-        with st.form(key="form_data"):
+        with st.form(key="form_"):
             for column in self.columns:
-                value = st.number_input(f"Valor para {column}:", value=0.0, step=1.0)
-                input[column] = value
-            print(input)
-            input_df = pd.DataFrame([input])
-            print(input_df)
-            submit_btn = st.form_submit_button(label="Predecir", on_click=lambda: self.__predict(input_df))
+                st.number_input(f"Valor para {column}:", value=0.0, step=1.0, key=column)
+            
+            submit_btn = st.form_submit_button(label="Predecir", on_click=self.__submit_btn_cb)
         st.markdown(
             """
             Trabajo Practio Aprendizaje Automatico:<br>
             [ Github ](https://github.com/Simon890/aprendizaje_auto)
             """, unsafe_allow_html=True
         )
+    
+    def __submit_btn_cb(self):
+        input_form = {}
+        for column in self.columns:
+            input_form[column] = st.session_state[column]
+        input_df = pd.DataFrame([input_form])
+        self.__predict(input_df)
             
     def __predict(self, input):
         """
@@ -73,7 +76,8 @@ if model_type == "reg":
     print("Starting LINEAL regression model")
     model = StreamlitModel("reg.pkl", title="Regresión Lineal")
 else:
-    print("Starting LOGISTIC regression model")
-    model = StreamlitModel("clas.pkl", title="Regresión Logística")
+    def render_pred(value):
+        return "Va a llover" if value >= 0.5 else "No va a llover"
+    model = StreamlitModel("clas.pkl", title="Regresión Logística", result_cb=render_pred)
 
 model.run()
