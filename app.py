@@ -1,11 +1,13 @@
 import streamlit as st
 import joblib
 from sklearn.pipeline import Pipeline
+from sklearn.metrics import roc_auc_score
 import pandas as pd
 import numpy as np
 from os import path
 import random
 import sys
+from tensorflow.keras.saving import load_model
 
 class StreamlitModel:
     filename = None
@@ -28,6 +30,7 @@ class StreamlitModel:
         """
         Carga el modelo
         """
+
         pipeline_data = joblib.load(self.filename)
         self.columns = pipeline_data["columns"]
         self.pipeline = pipeline_data["pipeline"]

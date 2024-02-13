@@ -2,13 +2,14 @@ import logging
 import pandas as pd
 import seaborn as sbn
 import numpy as np
+import random
 import matplotlib.pyplot as plt
 from typing import Literal
 from pandas import DataFrame
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from sklearn.metrics import confusion_matrix, classification_report
 from sklearn.utils import shuffle
 from sklearn.preprocessing import StandardScaler
@@ -165,9 +166,10 @@ class BaseDataset:
         if calculate_metrics:
             r2 = r2_score(y_test, y_pred)
             mse = mean_squared_error(y_test, y_pred)
-            return linear_model, y_pred, r2, mse
+            mae = mean_absolute_error(y_test, y_pred)
+            return linear_model, y_pred, r2, mse, mae
         else :
-            return linear_model, y_pred, None, None
+            return linear_model, y_pred, None, None, None
 
     def linear_prediction(self, x_pred):
         linear_model = LinearRegression()
@@ -268,6 +270,66 @@ class BaseDataset:
 
 
         return pca_model.explained_variance_ratio_
+
+    def plot_boxplot(self, cols: list[str]=[], figsize: tuple = (18, 12), max_cols : int=6 , 
+                     scatter:bool=True, 
+                     violin:bool= True, 
+                     violin_args: dict = {},
+                     boxplot_args: dict = {}):
+
+        default_violin_args = {
+             "points": 500, 
+             "showmeans": False, 
+             "showextrema": False, 
+             "showmedians":False, 
+             "vert":False
+        }
+
+        default_boxplot_args = {
+            "patch_artist": True, 
+            "vert":False
+        }
+
+        violin_args = {**default_violin_args, **violin_args}
+        boxplot_args = {**default_boxplot_args, **boxplot_args}
+
+        cols = cols if cols else list(self.df.columns)
+
+
+        #sbn.set_theme(style="whitegrid")
+        colors = ["#"+''.join([random.choice('0123456789ABCDEF') for j in range(6)])
+             for i in range(len(cols))]
+
+        n_rows = int(len(cols)/max_cols) + (len(cols)%max_cols>0)
+        n_cols = max_cols
+
+        fig, axes = plt.subplots(nrows=n_rows, ncols=n_cols, figsize=figsize)
+
+        plt.figure()
+
+        for idx, column in enumerate(cols):
+            ax = axes[idx // n_cols, idx % n_cols]
+
+            bp = ax.boxplot(self.df[column], **boxplot_args)
+            bp['boxes'][0].set_facecolor(colors[idx])
+            bp['boxes'][0].set_alpha(0.7)
+
+            if violin:
+                vp = ax.violinplot(self.df[column], **violin_args)
+                vp['bodies'][0].set_color(colors[idx])
+                vp['bodies'][0].set_alpha(0.7)
+
+            if scatter:
+                y = np.full(len(self.df[column]), 0.8) + np.random.uniform(low=-.1, high=.1, size=len(self.df[column]))
+                ax.scatter(self.df[column], y, s=3, c=colors[idx])
+
+            ax.set_title(column)
+            ax.set_yticks([])
+            ax.set_xlabel("Value")
+
+
+        fig.tight_layout()
+        plt.show()
 
     # def generate_train_test_df(self, x_cols : list[str], y_col:str):
 
